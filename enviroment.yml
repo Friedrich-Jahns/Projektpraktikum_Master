@@ -8,3 +8,6 @@ dependencies:
   - matplotlib
   - scipy
   - napari
+  - h5py
+  - pathlib
+  - tqdm
