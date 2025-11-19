@@ -1,0 +1,8 @@
+# Alle PNG-Dateien ausschließen
+*.png
+
+# Alle HDF5-Dateien ausschließen
+*.h5
+
+# Ganzen data-Ordner ausschließen
+data/
