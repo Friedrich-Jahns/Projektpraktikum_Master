@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import h5py
 from pathlib import Path
+from tqdm import tqdm
 
 
 def load_array_from_h5(path):
@@ -26,7 +27,7 @@ img = load_array_from_h5(file_path)
 save_path = dat_path/f'subsample_{file_path.stem}'
 save_path.mkdir(parents=True, exist_ok=True)
 
-for i in range(0,img.shape[0],500):
+for i in tqdm(range(0,img.shape[0],500)):
     for j in range(0,img.shape[1],500):    
         sub_img = img[i:i+500, j:j+500] 
 
