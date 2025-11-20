@@ -1,10 +1,7 @@
 import numpy as np 
 import matplotlib.pyplot as plt
 import h5py
-import napari
 from pathlib import Path
-import cv2
-import napari
 
 
 def load_array_from_h5(path):
