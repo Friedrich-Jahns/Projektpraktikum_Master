@@ -27,8 +27,8 @@ img = load_array_from_h5(file_path)
 save_path = dat_path/f'subsample_{file_path.stem}'
 save_path.mkdir(parents=True, exist_ok=True)
 
-for i in tqdm(range(0,img.shape[0],500)):
-    for j in range(0,img.shape[1],500):    
+for i in tqdm(range(0,img.shape[0],250)): # Je 500 für keinen overlap, 250 -> jeder bereich des bildes ist in 4 ausschnitten enthalten
+    for j in range(0,img.shape[1],250):   # " ^ " 
         sub_img = img[i:i+500, j:j+500] 
 
         plt.imsave(save_path/f'{i}_{j}.png',sub_img,cmap="gray")
