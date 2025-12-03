@@ -1,36 +1,27 @@
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import cv2
 from PIL import Image
 import random
-
 import torch
-# from torchvision.datasets import ImageFolder
-from torchvision import datasets
 from torchvision import transforms
 from torch.utils.data import DataLoader
 import torch.nn as nn
-import torchvision.models as models
 import torch.optim as optim
-# import torch.nn.functional as F
 from torchvision.transforms import functional as F
 from torch.utils.data import Dataset
 from torchvision.models.segmentation import deeplabv3_mobilenet_v3_large
-
 import os
 from pathlib import Path
 
-# from sklearn.metrics import f1_score
-
-dat_path = Path.cwd().parent.parent/'data'/'training'
+######
+# Paths
+######
+dat_path = Path.cwd().parent.parent / "data" / "training"
 
 
 path = {
-    "train": dat_path/'train',
-    "val": dat_path/'val',
-    "test": dat_path/'test',
-    # "submission": dat_path,
+    "train": dat_path / "train",
+    "val": dat_path / "val",
+    "test": dat_path / "test",
 }
 
 
@@ -68,6 +59,7 @@ def filter_2(x: torch.Tensor):  # Threshold and Highpass
     high_pass = grayscale_to_rgb(high_pass)
     return high_pass
 
+
 class CreateDataset(Dataset):
     def __init__(self, image_paths, mask_paths, transform=None):
         self.image_paths = image_paths
@@ -76,25 +68,24 @@ class CreateDataset(Dataset):
 
     def __len__(self):
         return len(self.image_paths)
-    
+
     def __getitem__(self, idx):
         img = Image.open(self.image_paths[idx]).convert("RGB")
         mask = Image.open(self.mask_paths[idx])
 
         if self.transform:
             img, mask = self.transform(img, mask)
+
         else:
             img = F.to_tensor(img)
-            mask = np.array(mask) 
+            mask = np.array(mask)
             if mask.ndim == 3:
-                mask = mask[:,:,0]
+                mask = mask[:, :, 0]
                 mask = (mask > 128).astype(np.int64)  # Hintergrund=0, Objekt=1
 
             mask = torch.as_tensor(mask, dtype=torch.long)  # shape H x W
 
         return img, mask
-
-
 
 
 ###########
@@ -109,23 +100,48 @@ random.seed(seed)
 ##############
 # Augmentierung
 ##############
-transform = transforms.Compose(
-    [
-        transforms.ToTensor(),
-        # transforms.Lambda(lambda img: filter_1(img)),
-        transforms.Resize((224, 224)),
-        transforms.RandomRotation(10),
-        transforms.RandomHorizontalFlip(),
-    ]
-)
+class SegmentationTransform:
+    def __init__(self):
+        self.resize = transforms.Resize((224, 224))
+
+    def custom(self, mask):
+        return mask
+
+    def __call__(self, img, mask):
+        # Resize
+        img = self.resize(img)
+        mask = self.resize(mask)
+
+        mask = mask.convert("L")
+
+        if random.random() < 0.5:
+            img = F.hflip(img)
+            mask = F.hflip(mask)
+
+        angle = random.uniform(-10, 10)
+        img = F.rotate(img, angle)
+        mask = F.rotate(mask, angle)
+
+        img = F.to_tensor(img)
+
+        mask = np.array(mask, dtype=np.uint8)
+        mask = (mask > 128).astype(np.int64)
+
+        mask = self.custom(mask)
+
+        mask = torch.as_tensor(np.array(mask), dtype=torch.long)
+
+        return img, mask
+
+
 ###########
 # Dataloader
 ###########
-img_paths   = [path['train']/'img'/f for f in os.listdir(path['train']/'img')]
-mask_paths  = [path['train']/'mask'/f for f in os.listdir(path['train']/'mask')]
+img_paths = [path["train"] / "img" / f for f in os.listdir(path["train"] / "img")]
+mask_paths = [path["train"] / "mask" / f for f in os.listdir(path["train"] / "mask")]
 # print(img_paths)
 
-dataset = CreateDataset(img_paths,mask_paths)
+dataset = CreateDataset(img_paths, mask_paths, transform=SegmentationTransform())
 dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
 
 #################
@@ -133,8 +149,6 @@ dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
 #################
 model = deeplabv3_mobilenet_v3_large(weights=None, num_classes=2)
 
-# num_ftrs = model.fc.in_features
-# model.fc = torch.nn.Linear(num_ftrs, 3)
 
 ##############
 # Loss function
@@ -142,54 +156,20 @@ model = deeplabv3_mobilenet_v3_large(weights=None, num_classes=2)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# model = model.to(device)
-
-# loss_fn = nn.CrossEntropyLoss()
-
 
 #########
-#Training
+# Training
 #########
 for epoch in range(10):
     for imgs, masks in dataloader:
         optimizer.zero_grad()
-        outputs = model(imgs)['out']  # Shape: [B, C, H, W]
+        outputs = model(imgs)["out"]  # Shape: [B, C, H, W]
         loss = criterion(outputs, masks)
         loss.backward()
         optimizer.step()
     print(f"Epoch {epoch}, Loss: {loss.item()}")
 
-###########
-#Validation
-###########
 
-# valid_transform = transforms.Compose([
-#     transforms.ToTensor(),
-#     transforms.Lambda(lambda img: filter_1(img)),
-#     transforms.Resize((224, 224)),
-# ])
+model_path = Path.cwd().parent.parent / "data" / "models"
 
-
-# valid_dataset = CreateDataset(path['val']/'img',path['val']/'mask')
-# valid_loader = DataLoader(valid_dataset, batch_size=32, shuffle=False)
-
-# # model.to(device)
-# model.eval()
-
-# all_labels = []
-# all_preds = []
-
-# with torch.no_grad():
-#     for inputs, labels in valid_loader:
-#         inputs, labels = inputs.to(device), labels.to(device)
-        
-#         outputs = model(inputs)
-        
-#         _, predicted = torch.max(outputs, 1)
-
-#         all_labels.extend(labels.cpu().numpy())
-#         all_preds.extend(predicted.cpu().numpy())
-
-# f1 = f1_score(all_labels, all_preds, average='weighted')  # Für unbalancierte Klassen ist 'weighted' sinnvoll
-# print(f'F1-Score: {f1:.4f}')
+torch.save(model, model_path / f"{Path(__file__).stem}.pth")
