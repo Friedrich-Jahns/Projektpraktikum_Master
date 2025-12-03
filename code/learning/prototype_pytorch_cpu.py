@@ -85,9 +85,8 @@ class CreateDataset(Dataset):
             img, mask = self.transform(img, mask)
         else:
             img = F.to_tensor(img)
-            mask = np.array(mask)  # shape H x W x 3 falls RGB
-            if mask.ndim == 3:    # RGB → 1 Kanal
-                # Beispiel: nur roter Kanal als Klassen-Index (0 oder 1)
+            mask = np.array(mask) 
+            if mask.ndim == 3:
                 mask = mask[:,:,0]
                 mask = (mask > 128).astype(np.int64)  # Hintergrund=0, Objekt=1
 
