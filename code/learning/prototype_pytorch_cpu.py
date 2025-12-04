@@ -114,20 +114,20 @@ class SegmentationTransform:
 
         mask = mask.convert("L")
 
-        if random.random() < 0.5:
-            img = F.hflip(img)
-            mask = F.hflip(mask)
+        # if random.random() < 0.5:
+        #     img = F.hflip(img)
+        #     mask = F.hflip(mask)
 
-        angle = random.uniform(-10, 10)
-        img = F.rotate(img, angle)
-        mask = F.rotate(mask, angle)
+        # angle = random.uniform(-10, 10)
+        # img = F.rotate(img, angle)
+        # mask = F.rotate(mask, angle)
 
         img = F.to_tensor(img)
 
         mask = np.array(mask, dtype=np.uint8)
         mask = (mask > 128).astype(np.int64)
 
-        mask = self.custom(mask)
+        # mask = self.custom(mask)
 
         mask = torch.as_tensor(np.array(mask), dtype=torch.long)
 

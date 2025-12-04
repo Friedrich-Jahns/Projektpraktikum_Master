@@ -1,30 +1,77 @@
-import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
-import cv2
 from PIL import Image
-import random
-
 import torch
-
-# from torchvision.datasets import ImageFolder
-from torchvision import datasets
-from torchvision import transforms
-from torch.utils.data import DataLoader
-import torch.nn as nn
-import torchvision.models as models
-import torch.optim as optim
-
-# import torch.nn.functional as F
-from torchvision.transforms import functional as F
-from torch.utils.data import Dataset
-from torchvision.models.segmentation import deeplabv3_mobilenet_v3_large
-
-import os
+import torchvision.transforms as T
 from pathlib import Path
 
+###########
+#Load Model
+###########
+model_path = Path.cwd().parent.parent / "data" / "models"
+model = torch.load(model_path/'prototype_pytorch_cpu.pth', map_location="cpu")
+model.eval()
 
 
+
+dat_path = Path.cwd().parent.parent / "data" / "training"
+path = {
+    "train": dat_path / "train",
+    "val": dat_path / "val",
+    "test": dat_path / "test",
+}
+
+
+
+def preprocess(image_path):
+    img = Image.open(image_path).convert("RGB")
+
+    transform = T.Compose([
+        T.Resize((224, 224)),
+        T.ToTensor(),
+    ])
+
+    return img, transform(img).unsqueeze(0)   # (1, C, H, W)
+
+
+# ======================================
+# 5) Vorhersage durchführen
+# ======================================
+def predict(image_tensor):
+    with torch.no_grad():
+        output = model(image_tensor)  # kann OrderedDict sein
+        # falls output ein dict ist, nimm 'out'
+        if isinstance(output, dict):
+            output = output['out']
+        mask = torch.argmax(output, dim=1).squeeze().cpu().numpy()
+    return mask
+
+
+# ======================================
+# 6) Maske anzeigen
+# ======================================
+def show_segmentation(original, mask):
+    plt.figure(figsize=(12, 6))
+
+    plt.subplot(1, 2, 1)
+    plt.title("Original")
+    plt.imshow(original)
+    plt.axis("off")
+
+    plt.subplot(1, 2, 2)
+    plt.title("Segmentierung")
+    plt.imshow(mask)
+    plt.axis("off")
+
+    plt.show()
+
+
+# ======================================
+# 7) Alles zusammen
+# ======================================
+if __name__ == "__main__":
+    img, tensor = preprocess("/home/friedrichjahns/Msc/PP/Projektpraktikum_Master/data/training/train/img/1.png")   # <- dein Testbild
+    mask = predict(tensor)
+    show_segmentation(img, mask)
 
 ###########
 # Validation
