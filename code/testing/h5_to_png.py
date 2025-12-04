@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import h5py
 from pathlib import Path
+import os
 
 
 def load_array_from_h5(path):
@@ -10,8 +11,8 @@ def load_array_from_h5(path):
         return np.array(data)
 
 
-
-dat_path = Path.cwd().parent.parent/'data'
+Filepath = Path(os.path.dirname(os.path.abspath(__file__)))
+dat_path = Filepath.parent.parent/'data'
 paths={}
 for i,path in enumerate(Path.iterdir(dat_path)):
         if path.suffix == '.h5':
