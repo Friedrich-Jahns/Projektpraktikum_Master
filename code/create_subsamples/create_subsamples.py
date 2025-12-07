@@ -3,16 +3,17 @@ import matplotlib.pyplot as plt
 import h5py
 from pathlib import Path
 from tqdm import tqdm
-
+import os
 
 def load_array_from_h5(path):
      with h5py.File(path,'r') as file:
-        data = file['Image'][:]
+        Key = "Image" if "Image" in file.keys() else "exported_data"
+        data = file[Key][:]6
         return np.array(data)
 
 
-
-dat_path = Path.cwd().parent.parent/'data'
+Filepath = Path(os.path.dirname(os.path.abspath(__file__)))
+dat_path = Filepath.parent.parent/'data'
 paths={}
 for i,path in enumerate(Path.iterdir(dat_path)):
         if path.suffix == '.h5':
