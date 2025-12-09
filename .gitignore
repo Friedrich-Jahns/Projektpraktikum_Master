@@ -4,5 +4,8 @@
 # Alle HDF5-Dateien ausschließen
 *.h5
 
+# Alle pth-Dateien ausschließen
+*.pth
+
 # Ganzen data-Ordner ausschließen
 data/
