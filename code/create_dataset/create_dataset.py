@@ -1,0 +1,67 @@
+import napari
+import numpy as np
+import matplotlib.pyplot as plt
+import h5py
+from pathlib import Path
+import os
+from tqdm import tqdm
+import cc3d
+
+
+path = Path('PE-2025-01953-M_00_s0060_PM_Complete_Transmittance_Stitched_Flat_v000-Image_Probabilities_1.h5')
+
+Filepath = Path(os.path.dirname(os.path.abspath(__file__)))
+fullpath = Filepath.parent.parent/f'data/{path}'
+print(fullpath)
+# viewer = napari.Viewer()
+
+with h5py.File(fullpath,'r') as file:
+    data = np.array(file['exported_data'][:])
+#    img = np.zeros(data.shape) 
+#    file['Image'].read_direct(img,(np.s_[0:-1, 0:-1], np.s_[0:-1, 0:-1])) 
+
+
+
+
+# viewer.add_image(data[:,:,0], name="Maske 1")
+# viewer.add_image(data[:,:,1], name="Maske 2")
+# viewer.add_image(data[:,:,2], name="Maske 3")
+
+
+# data_scaled = (data * 255).astype(np.uint8)
+# viewer.add_image(data_scaled[:,:,0], name="Maske 1_scaled")
+# viewer.add_image(data_scaled[:,:,1], name="Maske 2_scaled")
+# viewer.add_image(data_scaled[:,:,2], name="Maske 3_scaled")
+# napari.run()
+
+
+
+
+
+
+def create_background_mask(background_mask_initial):
+
+    dat = (background_mask_initial > 0).astype(np.uint8)
+
+    labels_out = cc3d.connected_components(dat, connectivity=8)
+
+    cleaned = np.zeros_like(dat)
+    min_size = 500
+
+    for lab in range(1, labels_out.max() + 1):
+        size = np.sum(labels_out == lab)
+        if size >= min_size:
+            cleaned[labels_out == lab] = 1
+
+    return cleaned
+
+
+
+img_nr = 2
+plt.figure(figsize=(15,10))
+plt.subplot(121)
+plt.imshow(data[:,:,img_nr],cmap='gray')
+plt.subplot(122)
+plt.imshow(create_background_mask(data[:,:,img_nr]),cmap='gray')
+
+plt.show()

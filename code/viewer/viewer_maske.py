@@ -25,8 +25,8 @@ viewer.add_image(data[:,:,1], name="Maske 2")
 viewer.add_image(data[:,:,2], name="Maske 3")
 
 
-data_scaled = (data * 255).astype(np.uint8)
-viewer.add_image(data_scaled[:,:,0], name="Maske 1_scaled")
-viewer.add_image(data_scaled[:,:,1], name="Maske 2_scaled")
-viewer.add_image(data_scaled[:,:,2], name="Maske 3_scaled")
+# data_scaled = (data * 255).astype(np.uint8)
+# viewer.add_image(data_scaled[:,:,0], name="Maske 1_scaled")
+# viewer.add_image(data_scaled[:,:,1], name="Maske 2_scaled")
+# viewer.add_image(data_scaled[:,:,2], name="Maske 3_scaled")
 napari.run()

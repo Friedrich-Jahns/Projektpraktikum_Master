@@ -8,7 +8,7 @@ import os
 def load_array_from_h5(path):
      with h5py.File(path,'r') as file:
         Key = "Image" if "Image" in file.keys() else "exported_data"
-        data = file[Key][:]6
+        data = file[Key][:]
         return np.array(data)
 
 
