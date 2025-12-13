@@ -8,7 +8,7 @@ import os
 def load_array_from_h5(path):
      with h5py.File(path,'r') as file:
         Key = "Image" if "Image" in file.keys() else "exported_data"
-        data = file[Key][:]6
+        data = file[Key][:]
         return np.array(data)
 
 
@@ -25,7 +25,7 @@ key = input('Dat. Nr.')
 file_path = Path(paths[int(key)])
 img = load_array_from_h5(file_path)
 
-save_path = dat_path/f'subsample_{file_path.stem}'
+save_path = dat_path / 'training' / 'train' / 'img'/ f'subsample_{file_path.stem}'
 save_path.mkdir(parents=True, exist_ok=True)
 
 for i in tqdm(range(0,img.shape[0],250)): # Je 500 für keinen overlap, 250 -> jeder bereich des bildes ist in 4 ausschnitten enthalten
