@@ -35,25 +35,18 @@ with h5py.File(fullpath,'r') as file:
 # napari.run()
 
 
+from scipy.ndimage import label
 
 
 
+def create_background_mask(background_mask_initial, min_size=500):
+    dat = (background_mask_initial == 0).astype(np.uint8)
+    labeled, num_labels = label(dat, structure=np.ones((3,3)))
 
-def create_background_mask(background_mask_initial):
+    counts = np.bincount(labeled.ravel())
+    mask = counts[labeled] >= min_size
+    return mask.astype(np.uint8)
 
-    dat = (background_mask_initial > 0).astype(np.uint8)
-
-    labels_out = cc3d.connected_components(dat, connectivity=8)
-
-    cleaned = np.zeros_like(dat)
-    min_size = 500
-
-    for lab in range(1, labels_out.max() + 1):
-        size = np.sum(labels_out == lab)
-        if size >= min_size:
-            cleaned[labels_out == lab] = 1
-
-    return cleaned
 
 
 
