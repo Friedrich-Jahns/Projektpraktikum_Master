@@ -5,7 +5,7 @@ import h5py
 from pathlib import Path
 import os
 
-path = Path('PE-2025-01953-M_00_s0060_PM_Complete_Transmittance_Stitched_Flat_v000-Image_Probabilities_1.h5')
+path = Path('PE-2025-01953-M_00_s0060_PM_Complete_Transmittance_Stitched_Flat_v000-Image_Probabilities_255_8b.h5')
 
 Filepath = Path(os.path.dirname(os.path.abspath(__file__)))
 fullpath = Filepath.parent.parent/f'data/{path}'
