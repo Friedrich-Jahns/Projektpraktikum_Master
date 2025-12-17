@@ -27,25 +27,17 @@ def create_background_mask(background_mask_initial, min_size=500):
 
 
 Filepath = Path(os.path.dirname(os.path.abspath(__file__)))
-dat_path = Filepath.parent.parent/'data'
+dat_path = Filepath.parent.parent/'data'/'raw'
+
 paths={}
-for i,path in enumerate(Path.iterdir(dat_path)):
+for i,folder in enumerate(Path.iterdir(dat_path)):
+    for j,path in enumerate(Path.iterdir(folder)):
         if path.suffix == '.h5':
                 print(f'{i} : {path}')
-                paths[i] = path
-
-for i,path in tqdm(enumerate(Path.iterdir(dat_path))):
-    if any([i=='Probabilities' for i in str(path).split('_')]):
-        type = 'mask'
-    else:
-        type = 'img'
-    
-    img = load_array_from_h5(path)
+        img = load_array_from_h5(path)
 
 
-#key = input('Dat. Nr.')
-#file_path = Path(paths[int(key)])
-#img = load_array_from_h5(file_path)
+
 
 #save_path = dat_path / 'training' / 'train' / 'img'/ f'subsample_{file_path.stem}'
 #save_path.mkdir(parents=True, exist_ok=True)
