@@ -6,37 +6,13 @@ from pathlib import Path
 import os
 from tqdm import tqdm
 import cc3d
-
-
-path = Path('PE-2025-01953-M_00_s0060_PM_Complete_Transmittance_Stitched_Flat_v000-Image_Probabilities_1.h5')
-
-Filepath = Path(os.path.dirname(os.path.abspath(__file__)))
-fullpath = Filepath.parent.parent/f'data/{path}'
-print(fullpath)
-# viewer = napari.Viewer()
-
-with h5py.File(fullpath,'r') as file:
-    data = np.array(file['exported_data'][:])
-#    img = np.zeros(data.shape) 
-#    file['Image'].read_direct(img,(np.s_[0:-1, 0:-1], np.s_[0:-1, 0:-1])) 
-
-
-
-
-# viewer.add_image(data[:,:,0], name="Maske 1")
-# viewer.add_image(data[:,:,1], name="Maske 2")
-# viewer.add_image(data[:,:,2], name="Maske 3")
-
-
-# data_scaled = (data * 255).astype(np.uint8)
-# viewer.add_image(data_scaled[:,:,0], name="Maske 1_scaled")
-# viewer.add_image(data_scaled[:,:,1], name="Maske 2_scaled")
-# viewer.add_image(data_scaled[:,:,2], name="Maske 3_scaled")
-# napari.run()
-
-
 from scipy.ndimage import label
 
+def load_array_from_h5(path):
+     with h5py.File(path,'r') as file:
+        Key = "Image" if "Image" in file.keys() else "exported_data"
+        data = file[Key][:]
+        return np.array(data)
 
 
 def create_background_mask(background_mask_initial, min_size=500):
@@ -50,11 +26,42 @@ def create_background_mask(background_mask_initial, min_size=500):
 
 
 
-img_nr = 2
-plt.figure(figsize=(15,10))
-plt.subplot(121)
-plt.imshow(data[:,:,img_nr],cmap='gray')
-plt.subplot(122)
-plt.imshow(create_background_mask(data[:,:,img_nr]),cmap='gray')
+Filepath = Path(os.path.dirname(os.path.abspath(__file__)))
+dat_path = Filepath.parent.parent/'data'
+paths={}
+for i,path in enumerate(Path.iterdir(dat_path)):
+        if path.suffix == '.h5':
+                print(f'{i} : {path}')
+                paths[i] = path
 
-plt.show()
+for i,path in tqdm(enumerate(Path.iterdir(dat_path))):
+    if any([i=='Probabilities' for i in str(path).split('_')]):
+        type = 'mask'
+    else:
+        type = 'img'
+    
+    img = load_array_from_h5(path)
+
+
+#key = input('Dat. Nr.')
+#file_path = Path(paths[int(key)])
+#img = load_array_from_h5(file_path)
+
+#save_path = dat_path / 'training' / 'train' / 'img'/ f'subsample_{file_path.stem}'
+#save_path.mkdir(parents=True, exist_ok=True)
+
+#for i in tqdm(range(0,img.shape[0],250)): # Je 500 für keinen overlap, 250 -> jeder bereich des bildes ist in 4 ausschnitt>
+#    for j in range(0,img.shape[1],250):   # " ^ "
+#        sub_img = img[i:i+500, j:j+500]
+
+#        plt.imsave(save_path/f'{i}_{j}.png',sub_img,cmap="gray")
+
+
+#img_nr = 2
+#plt.figure(figsize=(15,10))
+#plt.subplot(121)
+#plt.imshow(data[:,:,img_nr],cmap='gray')
+#plt.subplot(122)
+#plt.imshow(create_background_mask(data[:,:,img_nr]),cmap='gray')
+
+#plt.show()
