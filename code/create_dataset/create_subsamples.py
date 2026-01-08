@@ -15,7 +15,7 @@ def load_array_from_h5(path,bounds):
         shape = f[Key].shape
         
         #Show Full Image
-        if bounds == '0 -1 0 -1' or all(bounds == [0,-1,0,-1]):
+        if all(bounds == '0 -1 0 -1') or all([bounds[i]==[0,-1,0,-1][i] for i in range(len(bounds))]):
             bounds = [0,shape[0],0,shape[1]] 
         #Mask Dimensions don't match Image Dimensions
         if len(shape)<=2:
@@ -30,6 +30,8 @@ def load_array_from_h5(path,bounds):
 def get_largest_component(data):
     print('filer')
     
+
+
 
 
 
