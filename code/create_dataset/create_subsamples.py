@@ -4,6 +4,7 @@ import h5py
 from pathlib import Path
 from tqdm import tqdm
 import os
+import cv2
 
 def load_array_from_h5(path,bounds):
     try:
@@ -61,6 +62,23 @@ class mask_layers:
         dat = np.where(unthreshed>= 100,1,0)
         return dat
 
+    def only_largest_component(self):
+        input = self.background_data_threshed()
+        input_cc = (input > 0).astype(np.uint8)
+        #plt.imshow(input_cc)
+        #plt.show()
+        #print(input_cc.shape)
+        output = cv2.connectedComponentsWithStats(input_cc, 4, cv2.CV_32S)
+        (numLabels, labels, stats, centroids) = output
+        #print(f'{numLabels}, {labels}, {stats}, {centroids})')
+        area = stats[1:,cv2.CC_STAT_AREA]
+        #main_component_index = np.where(area == np.max(area),1,0)
+        main_component_index = [i for i, x in enumerate(area) if x == np.max(area)][0]
+        print(main_component_index)
+        main_component_mask = (labels == main_component_index+1).astype("uint8") * 255
+        return main_component_mask
+
+
     def vessel_data_threshed(self):
         unthreshed  = self.vessel_data()
         dat = np.where(unthreshed< 75,0,1)
@@ -78,17 +96,20 @@ path_list = [
     dat_path / 'PE-2025-01953-M_00_s0060_PM_Complete_Transmittance_Stitched_Flat_v000.h5'
     ]
 
-obj = mask_layers(path_list[0],'2200 3200 5000 6000')
+obj = mask_layers(path_list[0],'700 1200 5100 5700')
 #obj = mask_layers(path_list[0],'0 -1 0 -1')
+obj.only_largest_component()
 plt.figure(figsize=(12,8))
-plt.subplot(2,2,1)
+plt.subplot(2,3,1)
 plt.imshow(obj.image_data(),cmap='gray')
-plt.subplot(2,2,2)
+plt.subplot(2,3,2)
 plt.imshow(obj.background_data_threshed(),cmap='gray')
-plt.subplot(2,2,3)
+plt.subplot(2,3,3)
 plt.imshow(obj.vessel_data_threshed(),cmap='gray')
-plt.subplot(2,2,4)
+plt.subplot(2,3,4)
 plt.imshow(obj.vessel_data_threshed_nobg(),cmap='gray')
+plt.subplot(2,3,5)
+plt.imshow(obj.only_largest_component())
 plt.show()
 
 
