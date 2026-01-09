@@ -15,7 +15,7 @@ def load_array_from_h5(path,bounds):
         shape = f[Key].shape
         
         #Show Full Image
-        if all(bounds == '0 -1 0 -1') or all([bounds[i]==[0,-1,0,-1][i] for i in range(len(bounds))]):
+        if bounds == '0 -1 0 -1' or all([bounds[i]==[0,-1,0,-1][i] for i in range(len(bounds))]):
             bounds = [0,shape[0],0,shape[1]] 
         #Mask Dimensions don't match Image Dimensions
         if len(shape)<=2:
@@ -69,7 +69,15 @@ class mask_layers:
     def vessel_data_threshed_nobg(self):
         dat = np.multiply(self.vessel_data_threshed(),self.background_data_threshed())
         return dat
-
+    
+    def cc_filter(self):
+        input = self.vessel_data_threshed_nobg()
+        analysis = cv2.connectedComponentsWithStats(input, 4, cv2.CV_32S)
+        (totalLabels, label_ids, values, centroid) = analysis
+        
+        for i in range(1, totalLabels):
+            area = values[i, cv2.CC_STAT_AREA]
+        
 
 
 cwd = Path(os.path.dirname(os.path.abspath(__file__)))
@@ -78,18 +86,20 @@ path_list = [
     dat_path / 'PE-2025-01953-M_00_s0060_PM_Complete_Transmittance_Stitched_Flat_v000.h5'
     ]
 
-obj = mask_layers(path_list[0],'2200 3200 5000 6000')
-#obj = mask_layers(path_list[0],'0 -1 0 -1')
-plt.figure(figsize=(12,8))
-plt.subplot(2,2,1)
-plt.imshow(obj.image_data(),cmap='gray')
-plt.subplot(2,2,2)
-plt.imshow(obj.background_data_threshed(),cmap='gray')
-plt.subplot(2,2,3)
-plt.imshow(obj.vessel_data_threshed(),cmap='gray')
-plt.subplot(2,2,4)
-plt.imshow(obj.vessel_data_threshed_nobg(),cmap='gray')
-plt.show()
+#Demo
+if True:
+    #obj = mask_layers(path_list[0],'2200 3200 5000 6000')
+    obj = mask_layers(path_list[0],'0 -1 0 -1')
+    plt.figure(figsize=(12,8))
+    plt.subplot(2,2,1)
+    plt.imshow(obj.image_data(),cmap='gray')
+    plt.subplot(2,2,2)
+    plt.imshow(obj.background_data_threshed(),cmap='gray')
+    plt.subplot(2,2,3)
+    plt.imshow(obj.vessel_data_threshed(),cmap='gray')
+    plt.subplot(2,2,4)
+    plt.imshow(obj.vessel_data_threshed_nobg(),cmap='gray')
+    plt.show()
 
 
         
