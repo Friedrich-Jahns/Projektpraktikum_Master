@@ -7,7 +7,9 @@ import os
 import cv2
 
 
-def load_array_from_h5(path, bounds):
+def load_array_from_h5(path, bounds="0 -1 0 -1",return_size=False):
+    
+
     try:
         bounds = np.array(bounds.split(" ")).astype(float).astype(int)
     except:
@@ -15,6 +17,9 @@ def load_array_from_h5(path, bounds):
     with h5py.File(path, "r") as f:
         Key = "Image" if "Image" in f.keys() else "exported_data"
         shape = f[Key].shape
+        
+        if return_size:
+            return shape
 
         # Show Full Image
         if bounds == "0 -1 0 -1" or all(
@@ -104,7 +109,7 @@ path_list = [
 ]
 
 # Demo
-if True:
+if False:
     # obj = mask_layers(path_list[0],'700 1200 5100 5700')
     obj = mask_layers(path_list[0], "0 -1 0 -1")
     obj.only_largest_component()
@@ -124,24 +129,30 @@ if True:
     plt.show()
 
 
-# Filepath = Path(os.path.dirname(os.path.abspath(__file__)))
-# dat_path = Filepath.parent.parent/'data'
-# paths={}
-# for i,path in enumerate(Path.iterdir(dat_path)):
-#        if path.suffix == '.h5':
-#                print(f'{i} : {path}')
-#                paths[i] = path
+Filepath = Path(os.path.dirname(os.path.abspath(__file__)))
+data_files_path = Filepath.parent.parent/'data'
+paths=[]
+for i,path in enumerate(path_list):
+        if path.suffix == '.h5':
+                print(f'{i} : {path}')
+                paths.append(path)
 # print(paths[1])
 
 # key = input('Dat. Nr.')
 # file_path = Path(paths[int(key)])
 # img = load_array_from_h5(file_path)
+res_size = 256
 
-# save_path = dat_path / 'training' / 'train' / 'img'/ f'subsample_{file_path.stem}'
-# save_path.mkdir(parents=True, exist_ok=True)
+for img in tqdm(paths):
+    print(img)
+    print(load_array_from_h5(img,return_size=True)[0])
+    input()
+    save_path = data_files_path / 'training' / 'train' 
+    save_path.mkdir(parents=True, exist_ok=True)
 
-# for i in tqdm(range(0,img.shape[0],250)): # Je 500 für keinen overlap, 250 -> jeder bereich des bildes ist in 4 ausschnitten enthalten
-#    for j in range(0,img.shape[1],250):   # " ^ "
-#        sub_img = img[i:i+500, j:j+500]
-
-#        plt.imsave(save_path/f'{i}_{j}.png',sub_img,cmap="gray")
+    for i in tqdm(range(0,load_array_from_h5(img,return_size=True)[0],res_size//2)):
+        for j in range(0,load_array_from_h5(img,return_size=True)[1],res_size//2):
+            sub_img = mask_layers(img,f'{i} {i+res_size} {j} {j+res_size}')
+        
+            plt.imsave(save_path/'img'/f'{img.stem}_{i}_{j}.png',sub_img.image_data(),cmap="gray") 
+            plt.imsave(save_path/'mask'/f'{img.stem}_{i}_{j}.png',sub_img.vessel_data_threshed_nobg(),cmap="gray")
