@@ -14,7 +14,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 dat_path = Path.cwd().parent.parent.parent / "data" / "training" /'train'
 
 model_path = "unet_model.pth"
-image_path = dat_path / "img" / "1.png"  # dein Bild
+image_path = dat_path / "img" / "PE-2025-01953-M_00_s0060_PM_Complete_Transmittance_Stitched_Flat_v000_128_3584.png"  # dein Bild
 
 # --- Bild laden ---
 transform = transforms.Compose([
