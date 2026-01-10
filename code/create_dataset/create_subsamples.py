@@ -127,6 +127,7 @@ if False:
     plt.subplot(2, 3, 6)
     plt.imshow(obj.vessel_data_threshed_nobg_cc(), cmap="gray")
     plt.show()
+    exit()
 
 
 Filepath = Path(os.path.dirname(os.path.abspath(__file__)))
@@ -142,16 +143,22 @@ for i,path in enumerate(path_list):
 # file_path = Path(paths[int(key)])
 # img = load_array_from_h5(file_path)
 res_size = 256
+step_size =  res_size//2
 
+#print(res_size)
+#input()
 for img in tqdm(paths):
-    print(img)
-    print(load_array_from_h5(img,return_size=True)[0])
-    input()
+    #print(img)
+    #print(load_array_from_h5(img,return_size=True)[0])
+    #input()
     save_path = data_files_path / 'training' / 'train' 
     save_path.mkdir(parents=True, exist_ok=True)
-
-    for i in tqdm(range(0,load_array_from_h5(img,return_size=True)[0],res_size//2)):
-        for j in range(0,load_array_from_h5(img,return_size=True)[1],res_size//2):
+    shape = load_array_from_h5(img,return_size=True)
+    #print(shape[0]-(shape[0]%res_size))
+    #input() 
+    for i in tqdm(range(0,shape[0]-(res_size+shape[0]%res_size),res_size//2)):
+        for j in tqdm(range(0,shape[1]-(res_size+shape[0]%res_size),res_size//2)):
+            #print(j)
             sub_img = mask_layers(img,f'{i} {i+res_size} {j} {j+res_size}')
         
             plt.imsave(save_path/'img'/f'{img.stem}_{i}_{j}.png',sub_img.image_data(),cmap="gray") 
