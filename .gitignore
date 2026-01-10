@@ -8,4 +8,6 @@
 *.pth
 
 # Ganzen data-Ordner ausschließen
-data/
+data/raw
+data/models
+data/training
