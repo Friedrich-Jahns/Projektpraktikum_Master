@@ -7,8 +7,7 @@ import os
 import cv2
 
 
-def load_array_from_h5(path, bounds="0 -1 0 -1",return_size=False):
-    
+def load_array_from_h5(path, bounds="0 -1 0 -1", return_size=False):
 
     try:
         bounds = np.array(bounds.split(" ")).astype(float).astype(int)
@@ -17,7 +16,7 @@ def load_array_from_h5(path, bounds="0 -1 0 -1",return_size=False):
     with h5py.File(path, "r") as f:
         Key = "Image" if "Image" in f.keys() else "exported_data"
         shape = f[Key].shape
-        
+
         if return_size:
             return shape
 
@@ -48,16 +47,22 @@ def get_largest_component(data):
 class mask_layers:
     def __init__(self, image_path, bounds):
         self.img_path = image_path
-        self.vessel_path = Path(image_path).with_name(
-            Path(image_path).stem
-            + "-Image_Probabilities_255_8b"
-            + Path(image_path).suffix
+
+        raw_path = Path(image_path).parent.parent
+
+        b_folder_path = raw_path / "bgr_mask"
+
+        self.bckg_path = (
+            Path(b_folder_path)
+            / f"{Path(image_path).stem}-Image_Probabilities_background{Path(image_path).suffix}"
         )
-        self.bckg_path = Path(image_path).with_name(
-            Path(image_path).stem
-            + "-Image_Probabilities_background"
-            + Path(image_path).suffix
+
+        v_folder_path = raw_path / "vessel_mask"
+        self.vessel_path = (
+            Path(v_folder_path)
+            / f"{Path(image_path).stem}-Image_Probabilities_255_8b{Path(image_path).suffix}"
         )
+
         self.bounds = bounds
 
     def image_data(self):
@@ -101,12 +106,12 @@ class mask_layers:
         return dat
 
 
-cwd = Path(os.path.dirname(os.path.abspath(__file__)))
-dat_path = cwd.parent.parent / "data"
-path_list = [
-    dat_path
-    / "PE-2025-01953-M_00_s0060_PM_Complete_Transmittance_Stitched_Flat_v000.h5"
-]
+# cwd = Path(os.path.dirname(os.path.abspath(__file__)))
+# dat_path = cwd.parent.parent / "data" / "raw" / "img"
+# path_list = [
+#    dat_path
+#    / "PE-2025-01953-M_00_s0060_PM_Complete_Transmittance_Stitched_Flat_v000.h5"
+# ]
 
 # Demo
 if False:
@@ -131,35 +136,46 @@ if False:
 
 
 Filepath = Path(os.path.dirname(os.path.abspath(__file__)))
-data_files_path = Filepath.parent.parent/'data'
-paths=[]
-for i,path in enumerate(path_list):
-        if path.suffix == '.h5':
-                print(f'{i} : {path}')
-                paths.append(path)
+data_files_path = Filepath.parent.parent / "data"
+paths = []
+for i, path in enumerate(os.listdir(data_files_path / "raw" / "img")):
+    path = Path(path)
+    if path.suffix == ".h5":
+        print(f"{i} : {path}")
+        paths.append(data_files_path / "raw" / "img" / path)
 # print(paths[1])
 
 # key = input('Dat. Nr.')
 # file_path = Path(paths[int(key)])
 # img = load_array_from_h5(file_path)
 res_size = 256
-step_size =  res_size//2
+step_size = res_size // 2
 
-#print(res_size)
-#input()
+# print(res_size)
+# input()
 for img in tqdm(paths):
-    #print(img)
-    #print(load_array_from_h5(img,return_size=True)[0])
-    #input()
-    save_path = data_files_path / 'training' / 'train' 
+    # print(img)
+    # print(load_array_from_h5(img,return_size=True)[0])
+    # input()
+    save_path = data_files_path / "training" / "train"
     save_path.mkdir(parents=True, exist_ok=True)
-    shape = load_array_from_h5(img,return_size=True)
-    #print(shape[0]-(shape[0]%res_size))
-    #input() 
-    for i in tqdm(range(0,shape[0]-(res_size+shape[0]%res_size),res_size//2)):
-        for j in tqdm(range(0,shape[1]-(res_size+shape[0]%res_size),res_size//2)):
-            #print(j)
-            sub_img = mask_layers(img,f'{i} {i+res_size} {j} {j+res_size}')
-        
-            plt.imsave(save_path/'img'/f'{img.stem}_{i}_{j}.png',sub_img.image_data(),cmap="gray") 
-            plt.imsave(save_path/'mask'/f'{img.stem}_{i}_{j}.png',sub_img.vessel_data_threshed_nobg(),cmap="gray")
+    shape = load_array_from_h5(img, return_size=True)
+    # print(shape[0]-(shape[0]%res_size))
+    # input()
+    for i in tqdm(range(0, shape[0] - (res_size + shape[0] % res_size), res_size // 2)):
+        for j in tqdm(
+            range(0, shape[1] - (res_size + shape[0] % res_size), res_size // 2)
+        ):
+            # print(j)
+            sub_img = mask_layers(img, f"{i} {i+res_size} {j} {j+res_size}")
+
+            plt.imsave(
+                save_path / "img" / f"{img.stem}_{i}_{j}.png",
+                sub_img.image_data(),
+                cmap="gray",
+            )
+            plt.imsave(
+                save_path / "mask" / f"{img.stem}_{i}_{j}.png",
+                sub_img.vessel_data_threshed_nobg(),
+                cmap="gray",
+            )
