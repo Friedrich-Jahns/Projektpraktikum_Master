@@ -3,6 +3,7 @@ import torch.nn as nn
 from dataset import get_dataloader
 from unet import UNet
 from pathlib import Path
+from tqdm import tqdm
 
 # Pfade zu deinen Daten
 dat_path = Path.cwd().parent.parent.parent / "data" / "training" /'train'
@@ -12,21 +13,24 @@ image_dir = dat_path / "img"
 mask_dir = dat_path / "mask"
 
 # DataLoader
+print('Load Data',end='\r')
 dataloader = get_dataloader(image_dir, mask_dir, batch_size=4)
 
 # Gerät
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Modell, Loss, Optimizer
+print('Create model',end='\r')
 model = UNet().to(device)
 criterion = nn.BCELoss()  # binäre Segmentierung
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
 # Training
-num_epochs = 10
+print('Create model',end='\r')
+num_epochs = 1
 for epoch in range(num_epochs):
     model.train()
-    for images, masks in dataloader:
+    for images, masks in tqdm(dataloader):
         images = images.to(device)
         masks = masks.to(device).float()
 

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
 from unet import UNet
 from pathlib import Path
-import napari
+#import napari
 import numpy as np
 # --- Konfiguration ---
 
@@ -33,25 +33,33 @@ with torch.no_grad():
     output = model(input_tensor)
     output_np = output.squeeze().cpu().numpy()
 
-thresh = np.median(output_np)
+thresh = .5#np.median(output_np)
 mask = (output_np > thresh).astype(np.uint8)
 
 
 mask_display = mask * 255
 
 # # --- Maske anzeigen ---
-# plt.figure(figsize=(10,5))
-# plt.subplot(1,2,1)
-# plt.imshow(image)
-# plt.title("Originalbild")
+plt.figure(figsize=(10,10))
+plt.subplot(2,2,1)
+plt.imshow(image)
+plt.title("Originalbild")
 
-# plt.subplot(1,2,2)
-# plt.imshow(mask, cmap="gray")
-# plt.title("Segmentierungsmaske")
-# plt.show()
+plt.subplot(2,2,2)
+plt.imshow(mask_display, cmap="gray")
+plt.title("Segmentierungsmaske")
+
+plt.subplot(2,2,3)
+plt.imshow(image)
+plt.imshow(mask_display,alpha=.3,cmap='PiYG')
+
+plt.subplot(2,2,4)
+plt.imshow(np.multiply(mask_display,image.convert("L")),cmap="gray")
+
+plt.show()
 
 
-viewer = napari.Viewer()
-viewer.add_image(np.array(image), name='Originalbild')
-viewer.add_image(np.array(mask_display), name='Segmentierungsmaske')
-napari.run()
+#viewer = napari.Viewer()
+#viewer.add_image(np.array(image), name='Originalbild')
+#viewer.add_image(np.array(mask_display), name='Segmentierungsmaske')
+#napari.run()
