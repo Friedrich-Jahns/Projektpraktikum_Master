@@ -7,6 +7,7 @@ import os
 import cv2
 
 
+
 def load_array_from_h5(path, bounds="0 -1 0 -1", return_size=False):
 
     try:
@@ -21,7 +22,10 @@ def load_array_from_h5(path, bounds="0 -1 0 -1", return_size=False):
             return shape
 
         # Show Full Image
-        if bounds == "0 -1 0 -1" or all(
+        #if isinstance(bounds,str):
+
+
+        if False or all(
             [bounds[i] == [0, -1, 0, -1][i] for i in range(len(bounds))]
         ):
             bounds = [0, shape[0], 0, shape[1]]
@@ -106,17 +110,19 @@ class mask_layers:
         return dat
 
 
-# cwd = Path(os.path.dirname(os.path.abspath(__file__)))
-# dat_path = cwd.parent.parent / "data" / "raw" / "img"
-# path_list = [
-#    dat_path
-#    / "PE-2025-01953-M_00_s0060_PM_Complete_Transmittance_Stitched_Flat_v000.h5"
-# ]
+cwd = Path(os.path.dirname(os.path.abspath(__file__)))
+dat_path = cwd.parent.parent / "data" / "raw" / "img"
+path_list = [
+   dat_path
+   / "PE-2025-01953-M_00_s0060_PM_Complete_Transmittance_Stitched_Flat_v000.h5"
+]
 
 # Demo
 if False:
+
     # obj = mask_layers(path_list[0],'700 1200 5100 5700')
-    obj = mask_layers(path_list[0], "0 -1 0 -1")
+    obj = mask_layers(path_list[0], [0,-1,0,-1])
+    #obj = mask_layers(path_list[0], "0 -1 0 -1")
     obj.only_largest_component()
     plt.figure(figsize=(12, 8))
     plt.subplot(2, 3, 1)
