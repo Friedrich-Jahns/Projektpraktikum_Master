@@ -7,8 +7,11 @@
 # Alle pth-Dateien ausschließen
 *.pth
 *.gif
-
+*.xcf
 # Ganzen data-Ordner ausschließen
 data/raw
 data/models
 data/training
+
+
+.vscode
