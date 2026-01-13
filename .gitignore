@@ -6,6 +6,7 @@
 
 # Alle pth-Dateien ausschließen
 *.pth
+*.gif
 
 # Ganzen data-Ordner ausschließen
 data/raw
