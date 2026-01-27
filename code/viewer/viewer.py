@@ -6,7 +6,7 @@ from pathlib import Path
 import os
 
 cwd = Path.cwd()
-path = Path('/home/friedrich/Dokumente/Master/PP/Projektpraktikum_Master/data/raw/img/v004_3.h5')
+path = Path('/raw/img/PE-2025-01953-M_00_s0060_PM_Complete_Transmittance_Stitched_Flat_v000.h5')
 
 Filepath = Path(os.path.dirname(os.path.abspath(__file__)))
 fullpath = Filepath.parent.parent/f'data/{path}'
