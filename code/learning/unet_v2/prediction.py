@@ -6,12 +6,14 @@ from PIL import Image
 import numpy as np
 from unet import Unet
 
-cwd = Path(__file__).parent.parent.parent.parent
+cwd = Path(__file__).resolve().parents[3]
 img_path = cwd / 'data/training/train/img'
 mask_path = cwd / 'data/training/train/mask'
+print(cwd)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+#image_dir = dat_path / "img"
+#mask_dir = dat_path / "mask"
 model = Unet()
 model.load_state_dict(torch.load("unet_model.pth", map_location=device))
 model = model.to(device)
