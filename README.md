@@ -5,4 +5,3 @@
 - Training auf annotierten Bilddaten aus gefärbtem Mäusehirn
 - Anwendung des Modells auf ungefärbte Mäusehirn-Aufnahmen
 
-
