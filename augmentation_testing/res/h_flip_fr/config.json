@@ -1,0 +1,7 @@
+{
+  "augmentation": "h_flip",
+  "run_name": "h_flip_fr",
+  "epochs": 3,
+  "bs": 8,
+  "lr": 0.001
+}
