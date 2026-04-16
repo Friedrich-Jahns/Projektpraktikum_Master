@@ -43,8 +43,8 @@ class img_dataset(Dataset):
         return img, mask
 
 
-def dataloader(img_dir,mask_dir,bs=4,shuffle=True,num_workers=0,max_samples=None):
-    dataset = img_dataset(img_dir,mask_dir,max_samples=max_samples)
+def dataloader(img_dir,mask_dir, transform=None,bs=4,shuffle=True,num_workers=0,max_samples=None):
+    dataset = img_dataset(img_dir,mask_dir,transform=transform,max_samples=max_samples)
     dataloader = DataLoader(
     dataset,
     batch_size = bs,
