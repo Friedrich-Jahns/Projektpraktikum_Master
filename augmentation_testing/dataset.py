@@ -12,8 +12,17 @@ class img_dataset(Dataset):
         self.mask_dir = mask_dir
         self.transform = transform
 
-        self.images = sorted(os.listdir(img_dir))
-        self.masks = sorted(os.listdir(mask_dir))
+        valid_ext = (".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff")
+
+        self.images = sorted([
+            f for f in os.listdir(img_dir)
+            if f.lower().endswith(valid_ext)
+        ])
+
+        self.masks = sorted([
+            f for f in os.listdir(mask_dir)
+            if f.lower().endswith(valid_ext)
+        ])
         
         if max_samples is not None:
             random.seed(seed)

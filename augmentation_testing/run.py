@@ -19,11 +19,11 @@ parser.add_argument("--bs",           type=int, default=8)
 parser.add_argument("--lr",           type=float, default=1e-3)
 args = parser.parse_args()
 
-cwd = Path(os.getcwd()).parent.parent.parent.parent
-img_path      = cwd / 'Projektpraktikum_Master/data/training/train/img'
-mask_path     = cwd / 'Projektpraktikum_Master/data/training/train/mask'
-img_val_path  = cwd / 'Projektpraktikum_Master/data/training/val/img'
-mask_val_path = cwd / 'Projektpraktikum_Master/data/training/val/mask'
+cwd = Path(os.getcwd()).parent.parent
+img_path      = cwd / 'Projektpraktikum_Master/augmentation_testing/dat/train/img'
+mask_path     = cwd / 'Projektpraktikum_Master/augmentation_testing/dat/train/mask'
+img_val_path  = cwd / 'Projektpraktikum_Master/augmentation_testing/dat/val/img'
+mask_val_path = cwd / 'Projektpraktikum_Master/augmentation_testing/dat/val/mask'
 
 out_dir = Path("res") / args.run_name
 out_dir.mkdir(parents=True, exist_ok=True)
@@ -31,7 +31,7 @@ out_dir.mkdir(parents=True, exist_ok=True)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 aug = load_augmentation(args.augmentation)
 
-train_dataloader = dataloader(img_path, mask_path, transform=aug, bs=args.bs, shuffle=True, max_samples=100)
+train_dataloader = dataloader(img_path, mask_path, transform=aug, bs=args.bs, shuffle=True, max_samples=50)
 val_dataloader   = dataloader(img_val_path, mask_val_path, bs=args.bs, shuffle=False, max_samples=30)
 
 model     = Unet().to(device)

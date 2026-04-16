@@ -1,0 +1,7 @@
+{
+  "augmentation": "baseline",
+  "run_name": "baseline_test",
+  "epochs": 1,
+  "bs": 8,
+  "lr": 0.001
+}
