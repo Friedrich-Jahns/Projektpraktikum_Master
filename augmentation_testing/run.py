@@ -84,4 +84,10 @@ for epoch in tqdm(range(args.epochs)):
     print(f'{epoch+1}/{args.epochs} | train: {epoch_loss:.4f} | val: {val_loss:.4f}')
 
 torch.save(model.state_dict(), out_dir / "last_model.pth")
-np.save(out_dir / "train_log.npy", np.array(train_log))
+# np.save(out_dir / "train_log.npy", np.array(train_log))
+log_arr = np.array(train_log).T
+with open(out_dir / "train_log.json", "w") as f:
+    json.dump({
+        "train_loss": log_arr[0].tolist(),
+        "val_loss":   log_arr[1].tolist()
+    }, f, indent=2)
