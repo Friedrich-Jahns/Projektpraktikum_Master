@@ -43,42 +43,4 @@ python tile_cutter.py --input scan.h5 --output dat/train --mode both
 python tile_cutter.py --input scan.h5 --output dat/train --mode both --res 512 --step 128
 ```
 
----
 
-## Ausgabestruktur
-
-```
-<output>/
-  img/       # Bildtiles als .png
-  mask/      # Maskentiles als .png  (nur bei --mode both)
-```
-
-Bild und zugehörige Maske haben jeweils **denselben Dateinamen** (`<stem>_<i>_<j>.png`), sodass sie direkt vom Dataloader geladen werden können.
-
----
-
-## Erwartete Ordnerstruktur der Eingabedaten
-
-Die Masken werden automatisch relativ zur `.h5` Datei gesucht:
-
-```
-data/
-  raw/
-    img/
-      scan.h5                         ← Eingabebild
-    bgr_mask/
-      scan-Image_Probabilities_background.h5
-    vessel_mask/
-      scan-Image_Probabilities_255_8b.h5
-```
-
----
-
-## Maskenberechnung
-
-Die finale Maske kombiniert zwei Schritte:
-
-1. **Hintergrundmaske** – Gewebebereich wird per Schwellwert (`>= 100`) und größter zusammenhängender Komponente (Connected Components) isoliert
-2. **Gefäßmaske** – Gefäßwahrscheinlichkeit wird per Schwellwert (`>= 75`) binarisiert
-
-Beide werden multipliziert → Gefäße **nur innerhalb** des Gewebes.
