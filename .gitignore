@@ -15,3 +15,5 @@ data/training
 
 
 .vscode
+__pycache__/
+*.pyc

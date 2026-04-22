@@ -29,7 +29,7 @@ out_dir = Path("res") / args.run_name
 out_dir.mkdir(parents=True, exist_ok=True)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-aug = load_augmentation(args.augmentation)
+aug = load_augmentation(args.augmentation, ref_dir=img_val_path)
 
 train_dataloader = dataloader(img_path, mask_path, transform=aug, bs=args.bs, shuffle=True, max_samples=50)
 val_dataloader   = dataloader(img_val_path, mask_val_path, bs=args.bs, shuffle=False, max_samples=30)

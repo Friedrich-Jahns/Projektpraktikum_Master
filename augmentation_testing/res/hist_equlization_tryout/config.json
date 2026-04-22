@@ -1,0 +1,7 @@
+{
+  "augmentation": "hist_equilization",
+  "run_name": "hist_equlization_tryout",
+  "epochs": 5,
+  "bs": 8,
+  "lr": 0.001
+}
