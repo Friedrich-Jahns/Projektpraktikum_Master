@@ -10,7 +10,8 @@ from pathlib import Path
 import os
 import json
 import argparse
-
+# New
+from torch.amp import autocast, GradScaler
 
 
 
@@ -20,9 +21,9 @@ def main():
     parser.add_argument("--augmentation", type=str, default="baseline")
     parser.add_argument("--run_name",     type=str, required=True)
     parser.add_argument("--epochs",       type=int, default=100)
-    parser.add_argument("--bs",           type=int, default=10)
+    parser.add_argument("--bs",           type=int, default=8)
     parser.add_argument("--lr",           type=float, default=1e-2)
-    parser.add_argument("--worker",           type=float, default=6)
+    parser.add_argument("--worker",           type=float, default=8)
     args = parser.parse_args()
 
     cwd = Path(os.getcwd()).parent.parent
@@ -30,6 +31,8 @@ def main():
     mask_path     = cwd / 'Projektpraktikum_Master/augmentation_testing/dat/train/mask'
     img_val_path  = cwd / 'Projektpraktikum_Master/augmentation_testing/dat/val/img'
     mask_val_path = cwd / 'Projektpraktikum_Master/augmentation_testing/dat/val/mask'
+    # batches vorab laden
+    prefetch_factor = 8   # Batches vorab laden
 
     out_dir = Path("res") / args.run_name
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -42,7 +45,7 @@ def main():
         device = torch_directml.device()
     aug = load_augmentation(args.augmentation, ref_dir=img_val_path)
 
-    train_dataloader = dataloader(img_path, mask_path, transform=aug, bs=args.bs, shuffle=True, max_samples=50, num_workers=args.worker)
+    train_dataloader = dataloader(img_path, mask_path, transform=aug, bs=args.bs, shuffle=True, max_samples=50, num_workers=args.worker, prefetch = prefetch_factor)
     val_dataloader   = dataloader(img_val_path, mask_val_path, bs=args.bs, shuffle=False, max_samples=30)
 
     model     = Unet().to(device)
@@ -54,17 +57,35 @@ def main():
 
     train_log = []
     best_val_loss = float('inf')
+    # New
+    scaler = GradScaler()
+    accumulation_steps = 8 #Try
 
+    optimizer.zero_grad(set_to_none=True)
     for epoch in tqdm(range(args.epochs)):
         model.train()
         epoch_loss = 0.0
-        for imgs, masks in tqdm(train_dataloader, leave=False):
-            imgs, masks = imgs.to(device), masks.to(device)
-            optimizer.zero_grad()
-            outputs =  torch.sigmoid(model(imgs))
-            loss = criterion(outputs, masks) + dice_loss(outputs, masks)
-            loss.backward()
-            optimizer.step()
+
+        for i, batch in tqdm(enumerate(train_dataloader), leave=False):
+            images, masks = batch
+            images, masks = images.to(device), masks.to(device)
+            #optimizer.zero_grad()
+            
+            
+            with autocast("cuda"):
+                output =  model(images) # torch.sigmoid(model(imgs))
+                loss = criterion(output, masks) # criterion(outputs, masks) + dice_loss(outputs, masks)
+            scaler.scale(loss).backward()
+            # nur alle accumulation_steps batches updaten -> simuliert größere Batches
+            if (i + 1) % accumulation_steps == 0:
+                scaler.step(optimizer)
+                scaler.update()
+                optimizer.zero_grad(set_to_none=True)
+            # scaler.step(optimizer)
+            # scaler.update()
+            
+            # loss.backward()
+            # optimizer.step()
             epoch_loss += loss.item()
         epoch_loss /= len(train_dataloader)
 

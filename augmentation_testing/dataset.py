@@ -105,7 +105,8 @@ def dataloader(
     bs=12,
     shuffle=True,
     num_workers=8,
-    max_samples=None
+    max_samples=None,
+    prefetch = 4,
 ):
     dataset = img_dataset(
         img_dir,
@@ -119,7 +120,10 @@ def dataloader(
         batch_size=bs,
         shuffle=shuffle,
         num_workers=num_workers,
-        collate_fn=resize_collate_fn
+        collate_fn=resize_collate_fn,
+        prefetch_factor=prefetch,
+        persistent_workers=True,
+        pin_memory=True,
     )
 
     return dataloader

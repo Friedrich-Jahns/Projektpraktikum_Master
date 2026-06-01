@@ -1,8 +1,8 @@
 {
   "augmentation": "MaskedGauss",
-  "run_name": "ROCmTest",
+  "run_name": "ROCmTes",
   "epochs": 100,
-  "bs": 10,
+  "bs": 3,
   "lr": 0.01,
   "worker": 1
 }

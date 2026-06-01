@@ -1,0 +1,8 @@
+{
+  "augmentation": "MaskedGauss",
+  "run_name": "DirectMLTest",
+  "epochs": 100,
+  "bs": 5,
+  "lr": 0.01,
+  "worker": 0
+}
