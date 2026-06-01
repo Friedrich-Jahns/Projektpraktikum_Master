@@ -1,0 +1,7 @@
+{
+  "augmentation": "h_flip",
+  "run_name": "HFlip",
+  "epochs": 100,
+  "bs": 4,
+  "lr": 0.001
+}

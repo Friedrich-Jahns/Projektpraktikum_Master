@@ -1,0 +1,7 @@
+{
+  "augmentation": "gray",
+  "run_name": "gray",
+  "epochs": 100,
+  "bs": 4,
+  "lr": 0.001
+}

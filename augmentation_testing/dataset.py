@@ -52,13 +52,74 @@ class img_dataset(Dataset):
         return img, mask
 
 
-def dataloader(img_dir,mask_dir, transform=None,bs=4,shuffle=True,num_workers=0,max_samples=None):
-    dataset = img_dataset(img_dir,mask_dir,transform=transform,max_samples=max_samples)
-    dataloader = DataLoader(
-    dataset,
-    batch_size = bs,
-    shuffle = shuffle,
-    num_workers = num_workers
-    )
-    return dataloader
+# def dataloader(img_dir,mask_dir, transform=None,bs=4,shuffle=True,num_workers=0,max_samples=None):
+#     dataset = img_dataset(img_dir,mask_dir,transform=transform,max_samples=max_samples)
+#     dataloader = DataLoader(
+#     dataset,
+#     batch_size = bs,
+#     shuffle = shuffle,
+#     num_workers = num_workers
+#     )
+#     return dataloader
     
+import torch
+import torch.nn.functional as F
+from torch.utils.data import DataLoader
+
+def resize_collate_fn(batch):
+    images, masks = zip(*batch)
+
+    resized_images = []
+    resized_masks = []
+
+    for img, mask in zip(images, masks):
+
+        # Bild -> bilinear
+        img = F.interpolate(
+            img.unsqueeze(0),
+            size=(512, 512),
+            mode="bilinear",
+            align_corners=False
+        ).squeeze(0)
+
+        # Maske -> nearest
+        mask = F.interpolate(
+            mask.unsqueeze(0).float(),
+            size=(512, 512),
+            mode="nearest"
+        ).squeeze(0)
+
+        resized_images.append(img)
+        resized_masks.append(mask)
+
+    return (
+        torch.stack(resized_images),
+        torch.stack(resized_masks)
+    )
+
+
+def dataloader(
+    img_dir,
+    mask_dir,
+    transform=None,
+    bs=12,
+    shuffle=True,
+    num_workers=8,
+    max_samples=None
+):
+    dataset = img_dataset(
+        img_dir,
+        mask_dir,
+        transform=transform,
+        max_samples=max_samples
+    )
+
+    dataloader = DataLoader(
+        dataset,
+        batch_size=bs,
+        shuffle=shuffle,
+        num_workers=num_workers,
+        collate_fn=resize_collate_fn
+    )
+
+    return dataloader

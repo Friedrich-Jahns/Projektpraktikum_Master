@@ -1,0 +1,7 @@
+{
+  "augmentation": "hist_equilization",
+  "run_name": "histEq",
+  "epochs": 100,
+  "bs": 4,
+  "lr": 0.001
+}
