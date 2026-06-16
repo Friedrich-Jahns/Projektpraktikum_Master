@@ -1,0 +1,7 @@
+{
+  "run_name": "NewAug1",
+  "epochs": 10,
+  "bs": 32,
+  "lr": 1e-07,
+  "worker": 4
+}

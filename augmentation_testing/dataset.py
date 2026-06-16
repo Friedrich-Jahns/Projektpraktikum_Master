@@ -97,7 +97,7 @@ def resize_collate_fn(batch):
         torch.stack(resized_masks)
     )
 
-
+ 
 def dataloader(
     img_dir,
     mask_dir,
