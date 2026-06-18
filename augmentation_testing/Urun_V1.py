@@ -15,7 +15,7 @@ from torch.amp import autocast, GradScaler
 # from torch.utils.data import Dataset, DataLoader
 from aug.ClaudeAug import *
 from aug.ClaudeDataloader import *
-
+import time
 
 def main():
     parser = argparse.ArgumentParser()
@@ -91,27 +91,73 @@ def main():
     scaler = GradScaler(enabled=use_amp)
 
     optimizer.zero_grad(set_to_none=True)
-    for epoch in tqdm(range(args.epochs)):
+    for epoch in range(args.epochs):
         model.train()
         epoch_loss = 0.0
-
-        for i, batch in tqdm(enumerate(train_dataloader), leave=False):
-
+    
+        t_epoch_start = time.perf_counter()
+        t_data_total = 0.0
+        t_to_device_total = 0.0
+        t_forward_backward_total = 0.0
+        t_item_total = 0.0
+    
+        t_last = time.perf_counter()
+    
+        for i, batch in enumerate(train_dataloader):
+            t_after_load = time.perf_counter()
+            t_data_total += (t_after_load - t_last)
+    
             images, masks = batch
-            images, masks = images.to(device, non_blocking=True, memory_format=torch.channels_last), masks.to(device, non_blocking=True,)
+            images, masks = (
+                images.to(device, non_blocking=True, memory_format=torch.channels_last),
+                masks.to(device, non_blocking=True),
+            )
+            if device.type == "cuda":
+                torch.cuda.synchronize()
+            t_after_to_device = time.perf_counter()
+            t_to_device_total += (t_after_to_device - t_after_load)
+    
             with autocast(device_type=device.type, enabled=use_amp):
-                output =  model(images).squeeze(1) # torch.sigmoid(model(imgs))
-                loss = criterion(output, masks.float()) + dice_loss(output, masks.float())# criterion(outputs, masks) + dice_loss(outputs, masks)
+                output = model(images).squeeze(1)
+                loss = criterion(output, masks.float()) + dice_loss(output, masks.float())
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
             optimizer.zero_grad(set_to_none=True)
+    
+            if device.type == "cuda":
+                torch.cuda.synchronize()
+            t_after_compute = time.perf_counter()
+            t_forward_backward_total += (t_after_compute - t_after_to_device)
+    
             epoch_loss += loss.item()
+            t_after_item = time.perf_counter()
+            t_item_total += (t_after_item - t_after_compute)
+    
+            t_last = time.perf_counter()
+    
+            # Nur die ersten 2 Epochen genau loggen, dann normal weiterlaufen
+            if epoch == 0 and i == len(train_dataloader) - 1:
+                t_train_total = time.perf_counter() - t_epoch_start
+                print(f"\n{'='*50}")
+                print(f"DIAGNOSE EPOCHE {epoch+1} (TRAIN, {len(train_dataloader)} Batches)")
+                print(f"{'='*50}")
+                print(f"  Gesamt              : {t_train_total:.2f}s")
+                print(f"  Datenladen (wait)   : {t_data_total:.2f}s  ({t_data_total/t_train_total*100:.1f}%)")
+                print(f"  .to(device)         : {t_to_device_total:.2f}s  ({t_to_device_total/t_train_total*100:.1f}%)")
+                print(f"  forward+backward    : {t_forward_backward_total:.2f}s  ({t_forward_backward_total/t_train_total*100:.1f}%)")
+                print(f"  loss.item() sync    : {t_item_total:.2f}s  ({t_item_total/t_train_total*100:.1f}%)")
+                summe = t_data_total + t_to_device_total + t_forward_backward_total + t_item_total
+                print(f"  SUMME aller Teile   : {summe:.2f}s  (sollte ~Gesamt entsprechen)")
+                print(f"{'='*50}\n")
+    
         epoch_loss /= len(train_dataloader)
         model.eval()
         val_loss = 0.0
+    
+        t_val_start = time.perf_counter()
         with torch.no_grad():
-            for val_imgs, val_masks in tqdm(val_dataloader, leave=False):
+            for val_imgs, val_masks in val_dataloader:
                 val_imgs, val_masks = val_imgs.to(device, non_blocking=True, memory_format=torch.channels_last), val_masks.to(device, non_blocking=True)
                 with autocast(device_type=device.type, enabled=use_amp):
                     val_outputs = model(val_imgs).squeeze(1)
@@ -120,7 +166,11 @@ def main():
                         + dice_loss(val_outputs, val_masks.float())
                     )
                 val_loss += loss_v.item()
+        if device.type == "cuda":
+            torch.cuda.synchronize()
+        t_val_total = time.perf_counter() - t_val_start
         val_loss /= len(val_dataloader)
+
 
         train_log.append([epoch_loss, val_loss])
 

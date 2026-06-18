@@ -64,19 +64,32 @@ class JointCompose(JointTransform):
 # ---------------------------------------------------------------------------
 # Geometrische Transforms  (beide identisch transformiert)
 # ---------------------------------------------------------------------------
-
+ 
 class JointMaskedGauss(JointTransform):
     def __init__(self, sigmaLow=0.5, sigmaUpper=1.0):
         self.sigmaLow = sigmaLow
-        self.sigmaUpper = sigmaLow
-
+        self.sigmaUpper = sigmaUpper
     def __call__(self, image, mask):
         sig = random.uniform(self.sigmaLow, self.sigmaUpper)
-        arr     = (image.squeeze().numpy() * 255).astype(np.uint8)
+
+        arr = (image.squeeze().cpu().numpy() * 255).astype(np.uint8)
         blurred = cv2.GaussianBlur(arr, (0, 0), sig)
-        m       = np.clip(mask.squeeze().numpy(), 0, 1)
-        result  = arr * (1 - m) + blurred * m
-        return torch.tensor(result, dtype=torch.float32).unsqueeze(0) / 255.0, mask
+
+        blurred = torch.from_numpy(blurred).to(image.device).float() / 255.0
+        blurred = blurred.unsqueeze(0)
+
+        m = mask.float() / 255.0# mask.clamp(0, 1)
+
+        result = image * (1 - m) + blurred * m
+
+        return result, mask
+#    def __call__(self, image, mask):
+#        sig = random.uniform(self.sigmaLow, self.sigmaUpper)
+#        arr     = (image.squeeze().numpy() * 255).astype(np.uint8)
+#        blurred = cv2.GaussianBlur(arr, (0, 0), sig)
+#        m       = np.clip(mask.squeeze().numpy(), 0, 1)
+#        result  = arr * (1 - m) + blurred * m
+#        return torch.tensor(result, dtype=torch.float32).unsqueeze(0) / 255.0, mask
 
 class JointResize(JointTransform):
     """Skaliert Bild und Maske auf dieselbe Größe."""
@@ -328,7 +341,7 @@ class JointToTensor(JointTransform):
     def __call__(self, image, mask):
         image = TF.to_tensor(image)                             # [C, H, W], float32
 
-        mask_np = np.array(mask, dtype=np.int64)               # [H, W]
+        mask_np = np.array(mask, dtype=np.int64)/255               # [H, W]
         mask    = torch.from_numpy(mask_np)                     # Long-Tensor
 
         return image, mask

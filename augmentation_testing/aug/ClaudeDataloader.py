@@ -188,7 +188,7 @@ class SegmentationDataset(Dataset):
         weights = weights / weights.sum()      # normalisieren
         return weights
 
-
+ 
 # ---------------------------------------------------------------------------
 # Standard-Pipelines
 # ---------------------------------------------------------------------------
@@ -342,7 +342,7 @@ def get_dataloaders(
         prefetch_factor=prefetch,
         persistent_workers=True, 
         pin_memory=pin_memory,
-        drop_last=False,
+        drop_last=True,
     )
 
     _print_summary(train_ds, val_ds, train_loader, val_loader, batch_size)

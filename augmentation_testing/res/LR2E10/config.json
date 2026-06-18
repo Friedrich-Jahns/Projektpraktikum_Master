@@ -1,0 +1,7 @@
+{
+  "run_name": "LR2E10",
+  "epochs": 10,
+  "bs": 16,
+  "lr": 0.002,
+  "worker": 4
+}
