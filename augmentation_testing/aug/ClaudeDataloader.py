@@ -342,7 +342,7 @@ def get_dataloaders(
         prefetch_factor=prefetch,
         persistent_workers=True, 
         pin_memory=pin_memory,
-        drop_last=True,
+        drop_last=False,
     )
 
     _print_summary(train_ds, val_ds, train_loader, val_loader, batch_size)

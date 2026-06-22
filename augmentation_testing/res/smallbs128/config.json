@@ -1,0 +1,7 @@
+{
+  "run_name": "smallbs128",
+  "epochs": 100,
+  "bs": 128,
+  "lr": 0.002,
+  "worker": 8
+}

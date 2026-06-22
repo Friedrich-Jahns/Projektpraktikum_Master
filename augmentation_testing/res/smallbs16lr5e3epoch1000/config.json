@@ -1,0 +1,7 @@
+{
+  "run_name": "smallbs16lr5e3epoch1000",
+  "epochs": 1000,
+  "bs": 16,
+  "lr": 0.005,
+  "worker": 8
+}
