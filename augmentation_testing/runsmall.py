@@ -24,7 +24,35 @@ def main():
     parser.add_argument("--bs",           type=int, default=16)
     parser.add_argument("--lr",           type=float, default=1e-7)
     parser.add_argument("--worker",           type=int, default=4)
+    parser.add_argument("--resume",    type=str, default=None,       # NEU
+                    help="Run-Name zum Weitermachen (res/<name>/)")
+
     args = parser.parse_args()
+    
+    if args.resume is not None:
+        resume_dir = Path("res") / args.resume
+        with open(resume_dir / "config.json") as f:
+            old_config = json.load(f)
+        for key, value in old_config.items():
+            if key in ("run_name", "epochs", "resume"):
+                continue
+            if hasattr(args, key):
+                setattr(args, key, value)
+        log_path = resume_dir / "train_log.json"
+        if log_path.exists():
+            with open(log_path) as f:
+                old_log = json.load(f)
+            train_log = list(zip(old_log["train_loss"], old_log["val_loss"]))
+            best_val_loss = min(old_log["val_loss"])
+        else:
+            train_log = []
+            best_val_loss = float("inf")
+        resume_weights = resume_dir / "best_model.pth"
+    else:
+        train_log = []
+        best_val_loss = float("inf")
+        resume_weights = None
+
     
     cwd = Path(os.getcwd()).parent.parent
     # img_path      = cwd / 'Projektpraktikum_Master/augmentation_testing/dat/train/img'
@@ -54,10 +82,10 @@ def main():
         JointColorJitter(brightness=0.3, contrast=0.3, saturation=0.2),
         JointGaussianBlur(kernel_size=3, sigma=(0.1, 1.0)),
         JointToTensor(),
-        JointMaskedGauss(sigmaLow=0.5, sigmaUpper=1.0),
+        # JointMaskedGauss(sigmaLow=0.5, sigmaUpper=1.0),
         JointNormalize(mean=[0.485, 0.456, 0.406],
                         std =[0.229, 0.224, 0.225]),
-    ])# JointMaskedGauss(sigmaLow=0.5, sigmaUpper=1.0)
+    ])
 
     val_transform = JointCompose([
         JointResize((size, size)),
@@ -80,15 +108,26 @@ def main():
     model = Unet().to(device)
     model = model.to(memory_format=torch.channels_last)
     model = torch.compile(model)  # einmalig vor dem Training (Test) ,mode="reduce-overhead"
+    
+    if resume_weights is not None:
+        state_dict = torch.load(resume_weights, map_location=device)
+        state_dict = {
+            (k[len("_orig_mod."):] if k.startswith("_orig_mod.") else k): v
+            for k, v in state_dict.items()
+        }
+        target = model._orig_mod if hasattr(model, "_orig_mod") else model
+        target.load_state_dict(state_dict)
+        print(f"Gewichte aus '{args.resume}' geladen.")
+    else:
+        train_log = []
+        best_val_loss = float('inf')
+
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     criterion = torch.nn.BCEWithLogitsLoss()
-    # torch.backends.cudnn.benchmark = True
-    
     with open(out_dir / "config.json", "w") as f:
         json.dump(vars(args), f, indent=2)
 
-    train_log = []
-    best_val_loss = float('inf')
+    
     scaler = GradScaler(enabled=use_amp)
 
     optimizer.zero_grad(set_to_none=True)
@@ -148,8 +187,8 @@ def main():
             "train_loss": log_arr[0].tolist(),
             "val_loss":   log_arr[1].tolist()
         }, f, indent=2)
-    plt.plot(range(1, args.epochs + 1), log_arr[0], label='train_loss')
-    plt.plot(range(1, args.epochs + 1), log_arr[1], label='val_loss')
+    plt.plot(range(1, len(log_arr[0]) + 1), log_arr[0], label='train_loss')
+    plt.plot(range(1, len(log_arr[1]) + 1), log_arr[1], label='val_loss')
     plt.legend()
     plt.title(f'{epoch+1}/{args.epochs}')
     plt.savefig(out_dir / 'train_log.png')
