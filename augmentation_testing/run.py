@@ -25,7 +25,7 @@ def main():
     parser.add_argument("--augmentation", type=str, default="baseline")
     parser.add_argument("--run_name",     type=str, required=True)
     parser.add_argument("--epochs",       type=int, default=100)
-    parser.add_argument("--bs",           type=int, default=16)
+    parser.add_argument("--bs",           type=int, default=4)
     parser.add_argument("--lr",           type=float, default=1e-2)
     parser.add_argument("--worker",           type=float, default=1)
     args = parser.parse_args()
@@ -36,7 +36,7 @@ def main():
     img_val_path  = cwd / 'Projektpraktikum_Master/augmentation_testing/dat/val/img'
     mask_val_path = cwd / 'Projektpraktikum_Master/augmentation_testing/dat/val/mask'
     # batches vorab laden
-    prefetch_factor = 32   # Batches vorab laden
+    prefetch_factor = 2   # Batches vorab laden
     load_time = 0
     train_time = 0
     out_dir = Path("res") / args.run_name
@@ -46,8 +46,9 @@ def main():
         device = torch.device("cuda")
     else: # Windows alternative zu cuda, schon deutlich schneller, ca faktor 5 schneller
         # natürlich immernoch deutlich langsamer als cuda wenn es funktionieren würde D:
-        import torch_directml
-        device = torch_directml.device()
+        device = torch.device("cpu")
+        # import torch_directml
+        # device = torch_directml.device()
     aug = load_augmentation(args.augmentation, ref_dir=img_val_path)
 
     train_dataloader = dataloader(img_path, mask_path, transform=aug, bs=args.bs, shuffle=True, max_samples=50, num_workers=args.worker, prefetch = prefetch_factor)
