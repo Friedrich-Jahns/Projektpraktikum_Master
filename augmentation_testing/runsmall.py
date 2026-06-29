@@ -72,7 +72,7 @@ def main():
     
     use_amp = device.type == "cuda"
     # Augmentation-Pipeline
-    size = 256
+    size = 512
     train_transform = JointCompose([
         JointResize((size, size)),
         JointRandomHorizontalFlip(p=0.5),
@@ -82,7 +82,7 @@ def main():
         JointColorJitter(brightness=0.3, contrast=0.3, saturation=0.2),
         JointGaussianBlur(kernel_size=3, sigma=(0.1, 1.0)),
         JointToTensor(),
-        # JointMaskedGauss(sigmaLow=0.5, sigmaUpper=1.0),
+        JointMaskedGauss(sigmaLow=0.5, sigmaUpper=1.0),
         JointNormalize(mean=[0.485, 0.456, 0.406],
                         std =[0.229, 0.224, 0.225]),
     ])
