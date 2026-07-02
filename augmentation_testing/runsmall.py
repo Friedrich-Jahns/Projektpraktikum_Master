@@ -22,8 +22,8 @@ def main():
     parser.add_argument("--run_name",     type=str, required=True)
     parser.add_argument("--epochs",       type=int, default=100)
     parser.add_argument("--bs",           type=int, default=16)
-    parser.add_argument("--lr",           type=float, default=1e-7)
-    parser.add_argument("--worker",           type=int, default=4)
+    parser.add_argument("--lr",           type=float, default=1e-3)
+    parser.add_argument("--worker",           type=int, default=8)
     parser.add_argument("--resume",    type=str, default=None,       # NEU
                     help="Run-Name zum Weitermachen (res/<name>/)")
 
@@ -73,19 +73,20 @@ def main():
     use_amp = device.type == "cuda"
     # Augmentation-Pipeline
     size = 512
+    crop_size = 256
     train_transform = JointCompose([
         JointResize((size, size)),
         JointRandomHorizontalFlip(p=0.5),
         JointRandomVerticalFlip(p=0.5),
         JointRandomRotation(degrees=30),
-        JointRandomResizedCrop(size=(size, size), scale=(0.7, 1.0)),
+        JointRandomResizedCrop(size=(crop_size, crop_size), scale=(0.7, 1.0)),
         JointColorJitter(brightness=0.3, contrast=0.3, saturation=0.2),
         JointGaussianBlur(kernel_size=3, sigma=(0.1, 1.0)),
         JointToTensor(),
-        JointMaskedGauss(sigmaLow=0.5, sigmaUpper=1.0),
+        
         JointNormalize(mean=[0.485, 0.456, 0.406],
                         std =[0.229, 0.224, 0.225]),
-    ])
+    ]) # JointMaskedGauss(sigmaLow=0.5, sigmaUpper=1.0),
 
     val_transform = JointCompose([
         JointResize((size, size)),

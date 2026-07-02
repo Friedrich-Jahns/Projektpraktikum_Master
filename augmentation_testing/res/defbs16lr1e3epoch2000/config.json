@@ -1,8 +1,8 @@
 {
   "run_name": "defbs16lr1e3epoch2000",
-  "epochs": 2000,
+  "epochs": 1000,
   "bs": 16,
-  "lr": 1e-07,
-  "worker": 4,
-  "resume": null
+  "lr": 0.001,
+  "worker": 8,
+  "resume": "defbs16lr1e3epoch1000"
 }
