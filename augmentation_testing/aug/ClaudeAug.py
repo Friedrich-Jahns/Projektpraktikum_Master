@@ -64,25 +64,40 @@ class JointCompose(JointTransform):
 # ---------------------------------------------------------------------------
 # Geometrische Transforms  (beide identisch transformiert)
 # ---------------------------------------------------------------------------
- 
+
 class JointMaskedGauss(JointTransform):
     def __init__(self, sigmaLow=0.5, sigmaUpper=1.0):
         self.sigmaLow = sigmaLow
         self.sigmaUpper = sigmaUpper
+
     def __call__(self, image, mask):
         sig = random.uniform(self.sigmaLow, self.sigmaUpper)
+        arr     = (image.squeeze().cpu().numpy() * 255).astype(np.uint8)
+        blurred = cv2.GaussianBlur(arr, (0, 0), sig) / 255.0
 
-        arr = (image.squeeze().cpu().numpy() * 255).astype(np.uint8)
-        blurred = cv2.GaussianBlur(arr, (0, 0), sig)
+        blurred_t = torch.from_numpy(blurred).float().unsqueeze(0)  # float32, [1,H,W]
 
-        blurred = torch.from_numpy(blurred).to(image.device).float() / 255.0
-        blurred = blurred.unsqueeze(0)
+        m      = mask.float().unsqueeze(0)                           # [1,H,W]
+        result = image * (1 - m) + blurred_t * m
 
-        m = mask.float() / 255.0# mask.clamp(0, 1)
+        return result, mask 
+# class JointMaskedGauss(JointTransform):
+#     def __init__(self, sigmaLow=0.5, sigmaUpper=1.0):
+#         self.sigmaLow = sigmaLow
+#         self.sigmaUpper = sigmaUpper
+#     def __call__(self, image, mask):
+#         sig = random.uniform(self.sigmaLow, self.sigmaUpper)
 
-        result = image * (1 - m) + blurred * m
+#         arr = (image.squeeze().cpu().numpy() * 255).astype(np.uint8)
+#         blurred = cv2.GaussianBlur(arr, (0, 0), sig) / 255
+#         # blurred = torch.from_numpy(blurred).to(image.device).float() / 255.0
+#         # blurred = blurred.unsqueeze(0)
 
-        return result, mask
+#         m = mask.float()# / 255.0# mask.clamp(0, 1)
+
+#         result = image * (1 - m) + torch.from_numpy(blurred) * m
+
+#         return result, mask
 #    def __call__(self, image, mask):
 #        sig = random.uniform(self.sigmaLow, self.sigmaUpper)
 #        arr     = (image.squeeze().numpy() * 255).astype(np.uint8)

@@ -1,6 +1,6 @@
 import torch
 from torch import nn, optim
-from smallunet import Unet, dice_loss
+from smallunet import Unet, dice_loss #smallunet
 from dataset import dataloader
 from aug import load_augmentation
 from tqdm import tqdm
@@ -83,10 +83,10 @@ def main():
         JointColorJitter(brightness=0.3, contrast=0.3, saturation=0.2),
         JointGaussianBlur(kernel_size=3, sigma=(0.1, 1.0)),
         JointToTensor(),
-        
+        JointMaskedGauss(sigmaLow=0, sigmaUpper=0.5),
         JointNormalize(mean=[0.485, 0.456, 0.406],
                         std =[0.229, 0.224, 0.225]),
-    ]) # JointMaskedGauss(sigmaLow=0.5, sigmaUpper=1.0),
+    ]) # 
 
     val_transform = JointCompose([
         JointResize((size, size)),

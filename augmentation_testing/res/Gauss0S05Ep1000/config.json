@@ -1,0 +1,8 @@
+{
+  "run_name": "Gauss0S05Ep1000",
+  "epochs": 1000,
+  "bs": 16,
+  "lr": 0.001,
+  "worker": 8,
+  "resume": null
+}
