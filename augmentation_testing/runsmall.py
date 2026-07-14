@@ -42,8 +42,8 @@ def main():
         if log_path.exists():
             with open(log_path) as f:
                 old_log = json.load(f)
-            train_log = list(zip(old_log["train_loss"], old_log["val_loss"]))
-            best_val_loss = min(old_log["val_loss"])
+            train_log = list(zip(old_log["train_loss_dice"], old_log["train_loss_bce"], old_log["val_loss_dice"], old_log["val_loss_bce"]))
+            best_val_loss = min(old_log["val_loss_dice"] * 0.8 + old_log["val_loss_bce"] * 0.2)
         else:
             train_log = []
             best_val_loss = float("inf")
@@ -134,7 +134,7 @@ def main():
     optimizer.zero_grad(set_to_none=True)
     for epoch in tqdm(range(args.epochs)):
         model.train()
-        epoch_loss = 0.0
+        epoch_loss_dice, epoch_loss_bce = 0.0, 0.0
 
         for i, batch in tqdm(enumerate(train_dataloader), leave=False):
 
@@ -142,28 +142,32 @@ def main():
             images, masks = images.to(device, non_blocking=True, memory_format=torch.channels_last), masks.to(device, non_blocking=True,)
             with autocast(device_type=device.type, enabled=use_amp):
                 output =  model(images).squeeze(1) # torch.sigmoid(model(imgs))
-                loss = criterion(output, masks.float()) + dice_loss(output, masks.float())# criterion(outputs, masks) + dice_loss(outputs, masks)
+                bce_loss = criterion(output, masks.float()) 
+                dice_loss = dice_loss(output, masks.float())# criterion(outputs, masks) + dice_loss(outputs, masks)
+            loss = bce_loss * 0.2 + dice_loss * 0.8
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
             optimizer.zero_grad(set_to_none=True)
-            epoch_loss += loss.item()
-        epoch_loss /= len(train_dataloader)
+            epoch_loss_dice += dice_loss.item()
+            epoch_loss_bce += bce_loss.item()
+        epoch_loss_dice /= len(train_dataloader)
+        epoch_loss_bce /= len(train_dataloader)
         model.eval()
-        val_loss = 0.0
+        val_loss_dice, val_loss_bce = 0.0, 0.0
         with torch.no_grad():
             for val_imgs, val_masks in tqdm(val_dataloader, leave=False):
                 val_imgs, val_masks = val_imgs.to(device, non_blocking=True, memory_format=torch.channels_last), val_masks.to(device, non_blocking=True)
                 with autocast(device_type=device.type, enabled=use_amp):
                     val_outputs = model(val_imgs).squeeze(1)
-                    loss_v = (
-                        criterion(val_outputs, val_masks.float())
-                        + dice_loss(val_outputs, val_masks.float())
-                    )
-                val_loss += loss_v.item()
-        val_loss /= len(val_dataloader)
-
-        train_log.append([epoch_loss, val_loss])
+                    bce_loss = criterion(output, masks.float()) 
+                    dice_loss = dice_loss(output, masks.float())# criterion(outputs, masks) + dice_loss(outputs, masks)
+                val_loss_dice += dice_loss.item()
+                val_loss_bce += bce_loss.item()
+        val_loss_dice /= len(val_dataloader)
+        val_loss_bce /= len(val_dataloader)
+        val_loss = val_loss_dice * 0.8 + val_loss_bce * 0.2
+        train_log.append([epoch_loss_dice, epoch_loss_bce, val_loss_dice, val_loss_bce])
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
@@ -177,7 +181,7 @@ def main():
         #plt.savefig(out_dir / 'train_log.png')
         #plt.clf()
 
-        print(f'{epoch+1}/{args.epochs} | train: {epoch_loss:.4f} | val: {val_loss:.4f}')
+        print(f'{epoch+1}/{args.epochs} | train: dice {epoch_loss_dice:.4f}, bce {epoch_loss_bce:.4f} | val: dice {val_loss_dice:.4f}, bce {val_loss_bce}')
                     # _orig_mod ist wegen dem torch.compile(model) ein präfix der den parametern hinzugefügt wird 
                     # und beim einlesen der parameter stört
     torch.save(model._orig_mod.state_dict(), out_dir / "last_model.pth")
@@ -185,11 +189,15 @@ def main():
     log_arr = np.array(train_log).T
     with open(out_dir / "train_log.json", "w") as f:
         json.dump({
-            "train_loss": log_arr[0].tolist(),
-            "val_loss":   log_arr[1].tolist()
+            "train_loss_dice": log_arr[0].tolist(),
+            "train_loss_bce": log_arr[1].tolist(),
+            "val_loss_dice":   log_arr[2].tolist(),
+            "val_loss_bce":   log_arr[3].tolist()
         }, f, indent=2)
-    plt.plot(range(1, len(log_arr[0]) + 1), log_arr[0], label='train_loss')
-    plt.plot(range(1, len(log_arr[1]) + 1), log_arr[1], label='val_loss')
+    plt.plot(range(1, len(log_arr[0]) + 1), log_arr[0], label='train_loss_dice')
+    plt.plot(range(1, len(log_arr[0]) + 1), log_arr[1], label='train_loss_bce')
+    plt.plot(range(1, len(log_arr[1]) + 1), log_arr[2], label='val_loss_dice')
+    plt.plot(range(1, len(log_arr[1]) + 1), log_arr[3], label='val_loss_bce')
     plt.legend()
     plt.title(f'{epoch+1}/{args.epochs}')
     plt.savefig(out_dir / 'train_log.png')
