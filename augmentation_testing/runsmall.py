@@ -143,13 +143,13 @@ def main():
             with autocast(device_type=device.type, enabled=use_amp):
                 output =  model(images).squeeze(1) # torch.sigmoid(model(imgs))
                 bce_loss = criterion(output, masks.float()) 
-                dice_loss = dice_loss(output, masks.float())# criterion(outputs, masks) + dice_loss(outputs, masks)
-            loss = bce_loss * 0.2 + dice_loss * 0.8
+                diceLoss = dice_loss(output, masks.float())# criterion(outputs, masks) + dice_loss(outputs, masks)
+            loss = bce_loss * 0.2 + diceLoss * 0.8
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
             optimizer.zero_grad(set_to_none=True)
-            epoch_loss_dice += dice_loss.item()
+            epoch_loss_dice += diceLoss.item()
             epoch_loss_bce += bce_loss.item()
         epoch_loss_dice /= len(train_dataloader)
         epoch_loss_bce /= len(train_dataloader)
@@ -161,8 +161,8 @@ def main():
                 with autocast(device_type=device.type, enabled=use_amp):
                     val_outputs = model(val_imgs).squeeze(1)
                     bce_loss = criterion(output, masks.float()) 
-                    dice_loss = dice_loss(output, masks.float())# criterion(outputs, masks) + dice_loss(outputs, masks)
-                val_loss_dice += dice_loss.item()
+                    diceLoss = dice_loss(output, masks.float())# criterion(outputs, masks) + dice_loss(outputs, masks)
+                val_loss_dice += diceLoss.item()
                 val_loss_bce += bce_loss.item()
         val_loss_dice /= len(val_dataloader)
         val_loss_bce /= len(val_dataloader)
